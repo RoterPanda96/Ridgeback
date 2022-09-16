@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<robot name="azure_kinect" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="azure_offset_x" value="0.0" />
+  <xacro:property name="azure_offset_y" value="0.0" />
+  <xacro:property name="azure_offset_z" value="${support_length / 2}" />
+  <xacro:property name="azure_pitch" value="0.0" />
+
+  <xacro:macro name="azure_kinect" params="prefix:='' parent:=''">
+    <joint name="${prefix}azure2${parent}" type="fixed">
+      <origin xyz="${azure_offset_x} ${azure_offset_y} ${azure_offset_z}" rpy="0 ${azure_pitch} 0" />
+      <parent link="${parent}"/>
+      <child link="${prefix}azure_base"/>
+    </joint>
+    
+    <link name="${prefix}azure_base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://ridgeback_description/meshes/visual.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.0065" rpy="0 0 0" />
+        <geometry>
+          <box size="0.1264 0.103 0.039" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}camera_base" /> <!-- for compatability with old model -->
+    <link name="${prefix}azure_rgb" />
+    <link name="${prefix}azure_depth" />
+
+    <joint name="${prefix}azure_base_to_camera_base" type="fixed">
+      <parent link="${prefix}azure_base" />
+      <child link="${prefix}camera_base" />
+      <origin xyz="0.062 0.0 0.0065" rpy="0 0 0" />
+    </joint>
+
+    <joint name="${prefix}azure_base_to_rgb" type="fixed">
+      <parent link="${prefix}azure_base" />
+      <child link="${prefix}azure_rgb" />
+      <origin xyz="0.0618 -0.032 0.0065" rpy="0 0 0" />
+    </joint>
+
+    <joint name="${prefix}azure_base_to_depth" type="fixed">
+      <parent link="${prefix}azure_base" />
+      <child link="${prefix}azure_depth" />
+      <origin xyz="0.0618 -0.0005 0.0065" rpy="0 0 0" />
+    </joint>
+
+   
+    <link name="${prefix}azure_gazebo_depth" />
+
+    <joint name="${prefix}azure_gazebo_depth_joint" type="fixed">
+      <parent link="${prefix}azure_depth" />
+      <child link="${prefix}azure_gazebo_depth"/>
+      <origin xyz="0 0 0" rpy="-${pi/2} 0 -${pi/2}"/>
+    </joint>
+
+    <gazebo reference="${prefix}azure_depth">
+      <sensor name="${prefix}azure_gazebo_sensor" type="depth">
+        <!--
+          NFOV unbinned:        0, 5, 15, 30 FPS
+          NFOV 2x2 binned (SW): 0, 5, 15, 30 FPS
+          WFOV 2x2 binned:      0, 5, 15, 30 FPS
+          WFOV unbinned:        0, 5, 15 FPS
+
+          Note: Frame rate also needs to be changed in gazebo plugin setting (line 107)
+        -->
+        <update_rate>30</update_rate>
+        <camera>
+          <!--
+            NFOV: 1.309 rad (75 deg)
+            WFOV: 2.0944 rad (120 deg)
+          -->
+          <horizontal_fov>1.309</horizontal_fov>
+          <image>
+            <!--
+              NFOV unbinned:         640x576
+              NFOV 2x2 binned (SW):  320x288
+              WFOV 2x2 binned:       512x512
+              WFOV unbinned:         1024x1024
+            -->
+            <width>320</width>
+            <height>288</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <!--
+              NFOV unbinned:         0.5 - 3.86 m
+              NFOV 2x2 binned (SW):  0.5 - 5.46 m
+              WFOV 2x2 binned:       0.25 - 2.88 m
+              WFOV unbinned:         0.25 - 2.21 m
+            -->
+            <near>0.5</near>
+            <far>5.46</far>
+          </clip>
+        </camera>
+        <plugin filename="libgazebo_ros_openni_kinect.so" name="${prefix}azure_camera_controller">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>0.0</updateRate>
+          <cameraName>azure_kinect</cameraName>
+          <imageTopicName>rgb/image_raw</imageTopicName>
+          <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+          <depthImageTopicName>depth/image_raw</depthImageTopicName>
+          <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
+          <pointCloudTopicName>points2</pointCloudTopicName>
+          <frameName>${prefix}azure_gazebo_depth</frameName>
+          <pointCloudCutoff>0.5</pointCloudCutoff>
+          <pointCloudCutoffMax>5.46</pointCloudCutoffMax>
+          <distortion_k1>0.0</distortion_k1>
+          <distortion_k2>0.0</distortion_k2>
+          <distortion_k3>0.0</distortion_k3>
+          <distortion_t1>0.0</distortion_t1>
+          <distortion_t2>0.0</distortion_t2>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+  <xacro:azure_kinect prefix="" parent="support" />
+</robot>
