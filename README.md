@@ -1,0 +1,5 @@
+查询ridgeback_platform/ridgeback/ridgeback_description/urdf/support_and_azure_kinect.urdf.xacro文件的绝对路径
+为把azure kinect相机呈现在机器人模型上 在terminal内运行 export RIDGEBACK_URDF_EXTRAS=上面的绝对路径
+之后再启动仿真环境 roslaunch cpr_office_gazebo office_world.launch platform:=ridgeback
+
+https://www.clearpathrobotics.com/assets/guides/kinetic/ridgeback/navigation.html 为官网ridgeback的tutorials
